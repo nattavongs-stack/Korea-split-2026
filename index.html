@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>หารเงินทริปเกาหลี</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1d2330;--mut:#6b7385;--bd:#e3e6ee;--ac:#3b6cf6;--ac2:#e8eefe;--ok:#16a34a;--bad:#dc2626;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--card:#1b202b;--tx:#e8ebf2;--mut:#98a1b5;--bd:#2c3342;--ac:#6d93ff;--ac2:#232d4a;--ok:#4ade80;--bad:#f87171}}
+:root[data-theme="dark"]{--bg:#12151c;--card:#1b202b;--tx:#e8ebf2;--mut:#98a1b5;--bd:#2c3342;--ac:#6d93ff;--ac2:#232d4a;--ok:#4ade80;--bad:#f87171}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Noto Sans Thai","Sarabun",sans-serif;line-height:1.45}
+.wrap{max-width:720px;margin:0 auto;padding:14px}
+h1{font-size:1.3rem;margin:4px 0 12px}
+h2{font-size:1rem;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:.8rem;color:var(--mut);margin:8px 0 3px}
+input,select,button{font:inherit;color:var(--tx)}
+input,select{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg)}
+button{cursor:pointer;border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:8px 12px}
+button.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600;width:100%;padding:11px;margin-top:12px}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 12px;border-radius:99px;border:1px solid var(--bd);background:var(--bg);font-size:.9rem;user-select:none;cursor:pointer}
+.chip.on{background:var(--ac2);border-color:var(--ac);color:var(--ac);font-weight:600}
+.chip .x{margin-left:6px;color:var(--mut)}
+.add{display:flex;gap:6px;margin-top:8px}.add input{flex:1}.add button{flex:0 0 auto}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}
+.tab{flex:0 0 auto;padding:6px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);font-size:.85rem;text-align:center}
+.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.tab small{display:block;opacity:.75;font-size:.7rem}
+.item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--bd)}
+.item:first-child{border-top:0}
+.item .m{color:var(--mut);font-size:.8rem}
+.item .r{text-align:right;white-space:nowrap}
+.del{color:var(--bad);font-size:.8rem;cursor:pointer;background:none;border:0;padding:2px 0}
+.tot{display:flex;justify-content:space-between;font-weight:600;padding-top:10px;border-top:2px solid var(--bd);margin-top:4px}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--bd)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mut);font-weight:500;font-size:.75rem}
+.scroll{overflow-x:auto}
+.empty{color:var(--mut);text-align:center;padding:14px 0;font-size:.9rem}
+.set{padding:8px 0;border-top:1px solid var(--bd)}.set:first-of-type{border-top:0}
+.mut{color:var(--mut);font-size:.8rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🇰🇷 หารเงินทริปเกาหลี</h1>
+<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+  <div><div class="mut">รหัสทริป (ทุกคนที่เปิดลิงก์เดียวกันจะเห็นข้อมูลเดียวกัน)</div><b id="tripCode"></b> <span id="conn" class="mut">กำลังเชื่อมต่อ…</span></div>
+  <button onclick="copyLink(this)">คัดลอกลิงก์</button>
+</div>
+
+<div class="card">
+  <h2>👥 คนในทริป</h2>
+  <div class="chips" id="people"></div>
+  <div class="add"><input id="newName" placeholder="ชื่อเพื่อน" maxlength="20"><button onclick="addPerson()">+ เพิ่ม</button></div>
+  <label>อัตราแลกเปลี่ยน: 1 วอน = กี่บาท</label>
+  <input id="rate" type="number" step="0.0001" min="0.0001" inputmode="decimal">
+</div>
+
+<div class="card">
+  <h2>➕ เพิ่มรายจ่าย</h2>
+  <div class="row">
+    <div><label>วันที่</label><input id="date" type="date"></div>
+    <div><label>หมวด</label>
+      <select id="cat"><option>🍜 อาหาร</option><option>🚗 เดินทาง</option><option>🏨 ที่พัก</option><option>🎿 กิจกรรม</option><option>🛍️ ช้อปปิ้ง</option><option>📦 อื่นๆ</option></select></div>
+  </div>
+  <label>รายการ</label>
+  <input id="desc" placeholder="เช่น ข้าวเย็น, ค่าน้ำมัน" maxlength="60">
+  <div class="row">
+    <div><label>จำนวนเงิน</label><input id="amt" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></div>
+    <div><label>สกุลเงิน</label><select id="cur"><option value="KRW">วอน (₩)</option><option value="THB">บาท (฿)</option></select></div>
+  </div>
+  <label>ใครจ่ายก่อน</label>
+  <div class="chips" id="payer"></div>
+  <label>หารกับใครบ้าง <span class="mut">(กดเลือก/ยกเลิก)</span> <a href="#" onclick="toggleAll();return false" style="color:var(--ac);float:right">เลือกทั้งหมด</a></label>
+  <div class="chips" id="split"></div>
+  <button class="pri" onclick="addExpense()">บันทึกรายจ่าย</button>
+</div>
+
+<div class="card">
+  <h2>📅 รายจ่ายรายวัน</h2>
+  <div class="tabs" id="tabs"></div>
+  <div id="list"></div>
+</div>
+
+<div class="card">
+  <h2>📊 สรุปทั้งทริป</h2>
+  <div class="scroll" id="summary"></div>
+</div>
+
+<div class="card">
+  <h2>💸 ใครต้องโอนให้ใคร</h2>
+  <div id="settle"></div>
+  <button onclick="copySummary()" style="margin-top:10px;width:100%">คัดลอกสรุปส่งเข้ากลุ่ม</button>
+  <div class="mut" id="copied" style="text-align:center;margin-top:6px"></div>
+</div>
+
+<div style="text-align:center;margin:8px 0 24px"><button onclick="resetAll()" style="color:var(--bad)">ล้างข้อมูลทั้งหมด</button></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+window.addEventListener('error',e=>{const c=document.getElementById('conn');if(c)c.textContent='❌ '+e.message});
+const START='2026-12-05', END='2026-12-12';
+let S={people:[],rate:43,expenses:[],lastDate:START};
+let payer=null, split=new Set(), tab='all', nid=1;
+
+// ===== วางค่า Firebase config ของคุณตรงนี้ =====
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyCDqV6HvfFhzSjx4cFKk1E9XznxFWWTypM",
+  authDomain:"koreasplit2026.firebaseapp.com",
+  databaseURL:"https://koreasplit2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"koreasplit2026",
+  appId:"1:470976867960:web:a79ef42d6992a5c19e078d"
+};
+// ===============================================
+if(FIREBASE_CONFIG.apiKey.startsWith('PASTE'))alert('ยังไม่ได้ใส่ค่า Firebase config ในไฟล์ (ดูตรง FIREBASE_CONFIG)');
+let TRIP=decodeURIComponent((location.hash||'').slice(1));
+if(!TRIP){try{TRIP=localStorage.getItem('korea-trip-code')||''}catch(e){}}
+if(!TRIP){TRIP='korea-'+Math.random().toString(36).slice(2,10)}
+TRIP=TRIP.replace(/[.#$\[\]\/]/g,"-");
+location.hash=encodeURIComponent(TRIP);
+try{localStorage.setItem('korea-trip-code',TRIP)}catch(e){}
+firebase.initializeApp(FIREBASE_CONFIG);
+const db=firebase.database(),base='trips/'+TRIP;
+const newId=()=>Date.now()*1000+Math.floor(Math.random()*1000);
+function save(){}
+function copyLink(btn){
+  const t=location.href,old=btn.textContent;
+  const done=()=>{btn.textContent='คัดลอกแล้ว ✓';setTimeout(()=>btn.textContent=old,1800)};
+  try{navigator.clipboard.writeText(t).then(done,()=>fallback(t,done))}catch(e){fallback(t,done)}
+}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fB=n=>'฿'+n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fW=n=>'₩'+Math.round(n).toLocaleString('en-US');
+const toTHB=e=>e.cur==='KRW'?e.amt/S.rate:e.amt;
+const thDate=d=>new Date(d+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short'});
+const thDay=d=>new Date(d+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short'});
+
+function addPerson(){
+  const n=$('newName').value.trim();
+  if(!n||S.people.some(p=>p.name===n))return;
+  const id=newId();$('newName').value='';split.add(id);if(payer===null)payer=id;
+  db.ref(base+'/people/'+id).set({id,name:n});
+}
+$('newName').addEventListener('keydown',e=>{if(e.key==='Enter')addPerson()});
+function removePerson(id){
+  if(S.expenses.some(e=>e.payer===id||e.split.includes(id))){alert('ลบไม่ได้ เพราะมีรายจ่ายที่เกี่ยวข้อง ลบรายจ่ายนั้นก่อน');return}
+  split.delete(id);if(payer===id)payer=null;
+  db.ref(base+'/people/'+id).remove();
+}
+function toggleAll(){
+  if(split.size===S.people.length)split.clear();else S.people.forEach(p=>split.add(p.id));
+  renderForm();
+}
+function addExpense(){
+  const amt=parseFloat($('amt').value),desc=$('desc').value.trim()||$('cat').value;
+  if(!S.people.length){alert('เพิ่มคนในทริปก่อน');return}
+  if(!(amt>0)){alert('ใส่จำนวนเงิน');return}
+  if(payer===null){alert('เลือกคนจ่าย');return}
+  if(!split.size){alert('เลือกคนที่ต้องหารอย่างน้อย 1 คน');return}
+  const date=$('date').value||START;
+  const id=newId();
+  S.lastDate=date;tab=date;
+  $('amt').value='';$('desc').value='';
+  db.ref(base+'/expenses/'+id).set({id,date,cat:$('cat').value,desc,amt,cur:$('cur').value,payer,split:[...split]});
+}
+function delExpense(id){if(confirm('ลบรายการนี้?'))db.ref(base+'/expenses/'+id).remove()}
+function setRate(){const v=parseFloat($('rate').value);if(v>0){S.rate=1/v;renderLists();db.ref(base+'/rate').set(S.rate)}}
+$('rate').addEventListener('input',setRate);
+function resetAll(){if(confirm('ล้างข้อมูลของทริปนี้ ทุกคนจะเห็นว่าข้อมูลหายหมด ยืนยัน?'))db.ref(base).remove()}
+
+function days(){
+  const set=new Set(S.expenses.map(e=>e.date));
+  for(let d=new Date(START+'T00:00:00');d<=new Date(END+'T00:00:00');d.setDate(d.getDate()+1)){
+    set.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  }
+  return [...set].sort();
+}
+const name=id=>S.people.find(p=>p.id===id)?.name??'?';
+
+function calc(){
+  const paid={},share={};
+  S.people.forEach(p=>{paid[p.id]=0;share[p.id]=0});
+  S.expenses.forEach(e=>{
+    const t=toTHB(e);
+    if(paid[e.payer]!==undefined)paid[e.payer]+=t;
+    const each=t/e.split.length;
+    e.split.forEach(i=>{if(share[i]!==undefined)share[i]+=each});
+  });
+  return {paid,share};
+}
+
+function renderForm(){
+  $('people').innerHTML=S.people.length?S.people.map(p=>`<span class="chip">${esc(p.name)}<span class="x" onclick="removePerson(${p.id})">✕</span></span>`).join(''):'<span class="mut">ยังไม่มีใคร เพิ่มชื่อด้านล่าง</span>';
+  $('payer').innerHTML=S.people.map(p=>`<span class="chip ${payer===p.id?'on':''}" onclick="payer=${p.id};renderForm()">${esc(p.name)}</span>`).join('')||'<span class="mut">-</span>';
+  $('split').innerHTML=S.people.map(p=>`<span class="chip ${split.has(p.id)?'on':''}" onclick="split.has(${p.id})?split.delete(${p.id}):split.add(${p.id});renderForm()">${split.has(p.id)?'✓ ':''}${esc(p.name)}</span>`).join('')||'<span class="mut">-</span>';
+}
+
+function renderLists(){
+  const ds=days();
+  if(tab!=='all'&&!ds.includes(tab))tab='all';
+  const dayTot=d=>S.expenses.filter(e=>e.date===d).reduce((a,e)=>a+toTHB(e),0);
+  $('tabs').innerHTML=`<div class="tab ${tab==='all'?'on':''}" onclick="tab='all';renderLists()">ทั้งหมด<small>${fB(S.expenses.reduce((a,e)=>a+toTHB(e),0))}</small></div>`+
+    ds.map(d=>`<div class="tab ${tab===d?'on':''}" onclick="tab='${d}';$('date').value='${d}';renderLists()">${thDay(d)} ${thDate(d)}<small>${dayTot(d)?fB(dayTot(d)):'-'}</small></div>`).join('');
+
+  const shown=S.expenses.filter(e=>tab==='all'||e.date===tab).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.id-b.id);
+  if(!shown.length){$('list').innerHTML='<div class="empty">ยังไม่มีรายจ่าย</div>'}
+  else{
+    let html='',last='';
+    shown.forEach(e=>{
+      if(tab==='all'&&e.date!==last){last=e.date;html+=`<div class="mut" style="margin-top:10px;font-weight:600;display:flex;justify-content:space-between;align-items:center"><span>${thDay(e.date)} ${thDate(e.date)} · ${fB(dayTot(e.date))}</span><button style="padding:3px 9px;font-size:.75rem" onclick="copyDay('${e.date}',this)">คัดลอก</button></div>`}
+      const t=toTHB(e),all=e.split.length===S.people.length;
+      html+=`<div class="item"><div><div>${esc(e.cat.split(' ')[0])} ${esc(e.desc)}</div>
+        <div class="m">${esc(name(e.payer))} จ่าย · หาร ${all?'ทุกคน':e.split.map(i=>esc(name(i))).join(', ')} (คนละ ${fB(t/e.split.length)})</div>
+        <button class="del" onclick="delExpense(${e.id})">ลบ</button></div>
+        <div class="r"><b>${e.cur==='KRW'?fW(e.amt):fB(e.amt)}</b><div class="m">${e.cur==='KRW'?'≈ '+fB(t):'≈ '+fW(e.amt*S.rate)}</div></div></div>`;
+    });
+    if(tab!=='all')html+=`<div class="tot"><span>รวมวันนี้</span><span>${fB(dayTot(tab))} <span class="mut">(${fW(dayTot(tab)*S.rate)})</span></span></div><button style="width:100%;margin-top:10px" onclick="copyDay('${tab}',this)">คัดลอกสรุปวันนี้</button>`;
+    $('list').innerHTML=html;
+  }
+
+  const {paid,share}=calc();
+  if(!S.people.length||!S.expenses.length){$('summary').innerHTML='<div class="empty">ยังไม่มีข้อมูล</div>'}
+  else{
+    $('summary').innerHTML='<table><tr><th>ชื่อ</th><th>จ่ายไปแล้ว</th><th>ส่วนที่ต้องจ่าย</th><th>คงเหลือ</th></tr>'+
+      S.people.map(p=>{const b=paid[p.id]-share[p.id];
+        return `<tr><td>${esc(p.name)}</td><td>${fB(paid[p.id])}</td><td>${fB(share[p.id])}</td><td class="${b>=0.005?'pos':b<=-0.005?'neg':''}"><b>${b>=0?'+':''}${fB(b).replace('฿-','-฿')}</b></td></tr>`}).join('')+'</table>'+
+      '<div class="mut" style="margin-top:6px">+ = ควรได้รับเงินคืน · − = ต้องจ่ายเพิ่ม</div>';
+  }
+  $('settle').innerHTML=settleHTML(paid,share);
+}
+
+function settlements(paid,share){
+  const cr=[],db=[];
+  S.people.forEach(p=>{const b=paid[p.id]-share[p.id];if(b>0.005)cr.push({id:p.id,v:b});else if(b<-0.005)db.push({id:p.id,v:-b})});
+  cr.sort((a,b)=>b.v-a.v);db.sort((a,b)=>b.v-a.v);
+  const out=[];let i=0,j=0;
+  while(i<db.length&&j<cr.length){
+    const x=Math.min(db[i].v,cr[j].v);
+    out.push({from:db[i].id,to:cr[j].id,v:x});
+    db[i].v-=x;cr[j].v-=x;
+    if(db[i].v<0.005)i++;if(cr[j].v<0.005)j++;
+  }
+  return out;
+}
+function settleHTML(paid,share){
+  const s=settlements(paid,share);
+  if(!S.expenses.length)return '<div class="empty">ยังไม่มีข้อมูล</div>';
+  if(!s.length)return '<div class="empty">ไม่มียอดค้างจ่าย 🎉</div>';
+  return s.map(x=>`<div class="set"><b>${esc(name(x.from))}</b> โอนให้ <b>${esc(name(x.to))}</b><div><span class="neg"><b>${fB(x.v)}</b></span> <span class="mut">≈ ${fW(x.v*S.rate)}</span></div></div>`).join('');
+}
+function copySummary(){
+  const {paid,share}=calc(),s=settlements(paid,share);
+  let t='🇰🇷 สรุปหารเงินทริปเกาหลี\n';
+  t+='รวมทั้งหมด '+fB(S.expenses.reduce((a,e)=>a+toTHB(e),0))+' (1₩ = '+(1/S.rate).toFixed(4)+'฿)\n\n';
+  ds=days().filter(d=>S.expenses.some(e=>e.date===d));
+  ds.forEach(d=>{t+=thDay(d)+' '+thDate(d)+': '+fB(S.expenses.filter(e=>e.date===d).reduce((a,e)=>a+toTHB(e),0))+'\n'});
+  t+='\n💸 ต้องโอน\n'+(s.length?s.map(x=>name(x.from)+' → '+name(x.to)+' '+fB(x.v)).join('\n'):'ไม่มียอดค้าง');
+  const done=()=>{$('copied').textContent='คัดลอกแล้ว ✓';setTimeout(()=>$('copied').textContent='',2000)};
+  try{navigator.clipboard.writeText(t).then(done,()=>fallback(t,done))}catch(e){fallback(t,done)}
+}
+function fallback(t,done){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){}a.remove()}
+
+function copyDay(d,btn){
+  const list=S.expenses.filter(e=>e.date===d);
+  if(!list.length){btn.textContent='ยังไม่มีรายจ่าย';return}
+  const paid={},share={};S.people.forEach(p=>{paid[p.id]=0;share[p.id]=0});
+  let tot=0;
+  let t='📅 สรุป '+thDay(d)+' '+thDate(d)+' (1₩ = '+(1/S.rate).toFixed(4)+'฿)\n\n';
+  list.forEach(e=>{
+    const v=toTHB(e);tot+=v;
+    if(paid[e.payer]!==undefined)paid[e.payer]+=v;
+    e.split.forEach(i=>{if(share[i]!==undefined)share[i]+=v/e.split.length});
+    t+='• '+e.cat.split(' ')[0]+' '+e.desc+': '+(e.cur==='KRW'?fW(e.amt):fB(e.amt))+' (≈'+(e.cur==='KRW'?fB(v):fW(e.amt*S.rate))+') · '+name(e.payer)+' จ่าย · หาร '+(e.split.length===S.people.length?'ทุกคน':e.split.map(name).join(', '))+'\n';
+  });
+  t+='\nรวมวันนี้ '+fB(tot)+' ('+fW(tot*S.rate)+')\n\nรายคน (จ่ายไป / ส่วนที่ต้องจ่าย / คงเหลือ)\n';
+  S.people.forEach(p=>{
+    if(!paid[p.id]&&!share[p.id])return;
+    const b=paid[p.id]-share[p.id];
+    t+=p.name+': '+fB(paid[p.id])+' / '+fB(share[p.id])+' / '+(b>=0?'+':'')+fB(b).replace('฿-','-฿')+'\n';
+  });
+  const old=btn.textContent;
+  const done=()=>{btn.textContent='คัดลอกแล้ว ✓';setTimeout(()=>{btn.textContent=old},1800)};
+  try{navigator.clipboard.writeText(t).then(done,()=>fallback(t,done))}catch(e){fallback(t,done)}
+}
+
+function render(){renderForm();renderLists()}
+
+// init
+$('tripCode').textContent=TRIP;
+$('date').value=START;$('date').min='2026-01-01';
+const seen=new Set();
+db.ref('.info/connected').on('value',s=>{$('conn').textContent=s.val()?'🟢 ออนไลน์':'🔴 ออฟไลน์'});
+db.ref(base).on('value',snap=>{
+  const v=snap.val()||{};
+  S.people=Object.values(v.people||{}).sort((a,b)=>a.id-b.id);
+  S.expenses=Object.values(v.expenses||{}).map(e=>({...e,split:Array.isArray(e.split)?e.split:Object.values(e.split||{})}));
+  if(v.rate>0)S.rate=v.rate;
+  const ids=new Set(S.people.map(p=>p.id));
+  S.people.forEach(p=>{if(!seen.has(p.id)){seen.add(p.id);split.add(p.id)}});
+  [...split].forEach(i=>{if(!ids.has(i))split.delete(i)});
+  if(payer===null||!ids.has(payer))payer=S.people[0]?.id??null;
+  if(document.activeElement!==$('rate'))$('rate').value=+(1/S.rate).toFixed(5);
+  render();
+},err=>{$('conn').textContent='❌ เชื่อมต่อไม่ได้: '+err.code});
+render();
+</script>
+</body>
+</html>
